@@ -40,7 +40,7 @@ if (config.ssl) {
 // Add subscription support
 apollo.installSubscriptionHandlers(server);
 
-models.sequelize.sync().then(() => {
+models.sequelize.sync({}).then(() => {
   server.listen({ port: config.port }, () => {
     console.log(
       '🚀 Server ready at',
