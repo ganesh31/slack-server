@@ -3,8 +3,8 @@ import { ApolloServer } from 'apollo-server-express';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import typeDefs from './graphql/schema';
-import resolvers from './graphql/resolvers';
+import path from 'path';
+import { fileLoader, mergeTypes, mergeResolvers } from 'merge-graphql-schemas';
 import models from './models';
 
 const configurations = {
@@ -16,7 +16,22 @@ const configurations = {
 const environment = 'development';
 const config = configurations[environment];
 
-const apollo = new ApolloServer({ typeDefs, resolvers });
+const typeDefs = mergeTypes(fileLoader(path.join(__dirname, './graphql/schema')), {
+  all: true,
+});
+
+const resolvers = mergeResolvers(fileLoader(path.join(__dirname, './graphql/resolvers')));
+
+const apollo = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: {
+    models,
+    user: {
+      id: 1,
+    },
+  },
+});
 
 const app = express();
 apollo.applyMiddleware({ app });
@@ -44,9 +59,7 @@ models.sequelize.sync({}).then(() => {
   server.listen({ port: config.port }, () => {
     console.log(
       '🚀 Server ready at',
-      `http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${
-        apollo.graphqlPath
-      }`,
+      `http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`,
     );
   });
 });
