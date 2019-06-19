@@ -5,6 +5,7 @@ import https from 'https';
 import http from 'http';
 import typeDefs from './graphql/schema';
 import resolvers from './graphql/resolvers';
+import models from './models';
 
 const configurations = {
   // Note: You may need sudo to run on port 443
@@ -39,7 +40,13 @@ if (config.ssl) {
 // Add subscription support
 apollo.installSubscriptionHandlers(server);
 
-server.listen({ port: config.port }, () => console.log(
-  '🚀 Server ready at',
-  `http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${apollo.graphqlPath}`,
-));
+models.sequelize.sync().then(() => {
+  server.listen({ port: config.port }, () => {
+    console.log(
+      '🚀 Server ready at',
+      `http${config.ssl ? 's' : ''}://${config.hostname}:${config.port}${
+        apollo.graphqlPath
+      }`,
+    );
+  });
+});
