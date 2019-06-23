@@ -3,30 +3,38 @@ import { ApolloServer } from 'apollo-server-express';
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
+import cors from 'cors';
 import path from 'path';
 import { fileLoader, mergeTypes, mergeResolvers } from 'merge-graphql-schemas';
-import models from './models';
+import models from './src/models';
 
 const configurations = {
   // Note: You may need sudo to run on port 443
   production: { ssl: true, port: 443, hostname: 'example.com' },
   development: { ssl: false, port: 4000, hostname: 'localhost' },
 };
+const SECRET = 'kjsahdkajshdkjasd1233';
+const SECRET2 = 'adfffgdsfhfghhkklkfjdssaqdf23123';
 
 const environment = 'development';
 const config = configurations[environment];
 
-const typeDefs = mergeTypes(fileLoader(path.join(__dirname, './graphql/schema')), {
+const typeDefs = mergeTypes(fileLoader(path.join(__dirname, './src/graphql/schema')), {
   all: true,
 });
 
-const resolvers = mergeResolvers(fileLoader(path.join(__dirname, './graphql/resolvers')));
+const resolvers = mergeResolvers(fileLoader(path.join(__dirname, './src/graphql/resolvers')));
+const corsOptions = {
+  origin: 'http://localhost:3000',
+};
 
 const apollo = new ApolloServer({
   typeDefs,
   resolvers,
   context: {
     models,
+    SECRET,
+    SECRET2,
     user: {
       id: 1,
     },
@@ -34,7 +42,9 @@ const apollo = new ApolloServer({
 });
 
 const app = express();
-apollo.applyMiddleware({ app });
+// app.use(cors());
+app.use(cors(corsOptions));
+apollo.applyMiddleware({ app, cors: false });
 
 // Create the HTTPS or HTTP server, per configuration
 let server;
