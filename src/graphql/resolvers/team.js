@@ -1,6 +1,16 @@
 import { formatErrors } from '../../utils';
 import { requiresAuth } from '../../permissions';
+import { async } from 'rxjs/internal/scheduler/async';
 export default {
+  Query: {
+    allTeams: requiresAuth.createResolver(
+      async (parent, args, { models, user }) =>
+        await models.Team.findAll({
+          where: { owner: user.id },
+          raw: true
+        })
+    )
+  },
   Mutation: {
     createTeam: requiresAuth.createResolver(
       async (parent, args, { models, user }) => {
@@ -18,5 +28,9 @@ export default {
         }
       }
     )
+  },
+  Team: {
+    channels: async ({ id }, args, { models, user }) =>
+      await models.Channel.findAll({ where: { teamId: id }, raw: true })
   }
 };
