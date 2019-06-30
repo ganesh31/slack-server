@@ -1,23 +1,30 @@
 import { formatErrors } from '../../utils';
 import { requiresAuth } from '../../permissions';
-import { async } from 'rxjs/internal/scheduler/async';
 export default {
   Query: {
     allTeams: requiresAuth.createResolver(
       async (parent, args, { models, user }) =>
-        await models.Team.findAll({
-          where: { owner: user.id },
-          raw: true
-        })
+        await models.Team.findAll(
+          {
+            where: { owner: user.id }
+          },
+          { raw: true }
+        )
     )
   },
   Mutation: {
     createTeam: requiresAuth.createResolver(
       async (parent, args, { models, user }) => {
         try {
-          await models.Team.create({ ...args, owner: user.id });
+          const team = await models.Team.create({ ...args, owner: user.id });
+          await models.Channel.create({
+            name: 'general',
+            public: true,
+            teamId: team.id
+          });
           return {
-            ok: true
+            ok: true,
+            team
           };
         } catch (error) {
           console.log(error);
